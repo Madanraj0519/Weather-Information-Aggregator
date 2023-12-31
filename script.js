@@ -1,7 +1,7 @@
 async function checkWeather(){
  
   let firstApiKey = `3fc8a028655f363852aca1b09b46c610`;
-  let secondApiKey = `c8af1b4e2ad0ac98b2c469ae954cf6e4`;
+  // let secondApiKey = `c8af1b4e2ad0ac98b2c469ae954cf6e4`;
   let thirdApiKey = `LYm1OxxMN7DboBPjyb1qPjCGyjflwEYk`;
 
 
@@ -25,8 +25,8 @@ async function checkWeather(){
       fetchAccuWeatherApi(cityName)
     ]);
 
-    console.log(openWeather);
-    console.log(accuWeather);
+    // console.log(openWeather);
+    // console.log(accuWeather);
 
     let resultDiv = document.getElementById('result');
     resultDiv.innerHTML = `
@@ -141,7 +141,7 @@ async function checkWeather(){
 
 
   // Accu Weather APi
-  
+
   async function fetchForeCast(cityCode){
     let res = await fetch(`https://dataservice.accuweather.com/forecasts/v1/daily/1day/${cityCode}?apikey=${thirdApiKey}`);
     let data = await res.json();
