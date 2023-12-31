@@ -2,6 +2,7 @@ async function checkWeather(){
  
   let firstApiKey = `3fc8a028655f363852aca1b09b46c610`;
   let secondApiKey = `c8af1b4e2ad0ac98b2c469ae954cf6e4`;
+  let thirdApiKey = `LYm1OxxMN7DboBPjyb1qPjCGyjflwEYk`;
 
 
   let cityInput = document.getElementById('cityInput');
@@ -17,10 +18,15 @@ async function checkWeather(){
 
 
    try{
-    const [openWeather, weatherStack] = await Promise.all([
+
+
+    const [openWeather, accuWeather] = await Promise.all([
       fetchOpenWeatherApi(cityName),
-      fetchWeatherStackApi(cityName)
+      fetchAccuWeatherApi(cityName)
     ]);
+
+    console.log(openWeather);
+    console.log(accuWeather);
 
     let resultDiv = document.getElementById('result');
     resultDiv.innerHTML = `
@@ -47,13 +53,13 @@ async function checkWeather(){
       <div class="card-body">
         <i class="fa-solid fa-cloud" style="color: #dee0e3;"></i>
         <h4 class="card-title text-center">Weather Stack Api</h4>
-        <h5 class="card-title text-center">${weatherStack.cityName}</h5>
-        <p class="card-text text-center"><i class="fa-solid fa-sun fa-lg" style="color: #c1c5cd;"></i>Weather : ${weatherStack.weather}</p>
-        <p class="card-text text-center">Local-time : ${weatherStack.locationTime}</p>
-        <p class="card-text text-center"><i class="fa-solid fa-temperature-three-quarters fa-lg" style="color: #c1c5cd;"></i>Temperature : ${weatherStack.temperature}°C</p>
-        <p class="card-text text-center"><i class="fa-solid fa-cloud-rain fa-lg" style="color: #c1c5cd;"></i> Humidity : ${weatherStack.humidity}</p>
-        <p class="card-text text-center"><i class="fa-solid fa-wind fa-lg" style="color: #c1c5cd;"></i> Wind-Speed : ${weatherStack.windSpeed}</p>
-        <p class="card-text text-center"><i class="fa-solid fa-wind fa-lg" style="color: #c1c5cd;"></i> Wind-Degree : ${weatherStack.windDeg}</p>
+        <h5 class="card-title text-center">${openWeather.cityName}</h5>
+        <p class="card-text text-center"><i class="fa-solid fa-sun fa-lg" style="color: #c1c5cd;"></i>Weather : ${accuWeather.weather}</p>
+        <p class="card-text text-center">Local-time : ${accuWeather.date}</p>
+        <p class="card-text text-center"><i class="fa-solid fa-temperature-three-quarters fa-lg" style="color: #c1c5cd;"></i>Temperature : ${accuWeather.temperature}°C</p>
+        <p class="card-text text-center"><i class="fa-solid fa-cloud-rain fa-lg" style="color: #c1c5cd;"></i> Humidity : ${accuWeather.humidity}</p>
+        <p class="card-text text-center"><i class="fa-solid fa-wind fa-lg" style="color: #c1c5cd;"></i> Day-time : ${accuWeather.daytime}</p>
+        <p class="card-text text-center"><i class="fa-solid fa-wind fa-lg" style="color: #c1c5cd;"></i> Night-time : ${accuWeather.nighttime}</p>
       </div>
     </div>
   </div>
@@ -97,6 +103,7 @@ async function checkWeather(){
   async function fetchOpenWeatherApi(cityName){
     let res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${firstApiKey}`);
     let data = await res.json();
+
     if(res.ok){
       return {
         cityName : data.name,
@@ -112,22 +119,53 @@ async function checkWeather(){
     }
   }
 
-  async function fetchWeatherStackApi(cityName){
-    let res = await fetch(`http://api.weatherstack.com/current?access_key=${secondApiKey}&query=${cityName}`);
+  // async function fetchWeatherStackApi(cityName){
+  //   let res = await fetch(`http://api.weatherstack.com/current?access_key=${secondApiKey}&query=${cityName}`);
+  //   let data = await res.json();
+  //   console.log("WeatherStack", data);
+  //   if(res.ok){
+  //     return {
+  //       cityName : data.location.name,
+  //       locationTime : data.location.localtime,
+  //       weather : data.current.weather_descriptions[0],
+  //       temperature : data.current.temperature,
+  //       humidity : data.current.humidity,
+  //       windSpeed : data.current.wind_speed,
+  //       windDeg : data.current.wind_degree,
+  //     };
+  //   }else{
+  //     throw new Error("Could get teh OpenweatherApi", data.message);
+  //   }
+    
+  // }
+
+
+  // Accu Weather APi
+  
+  async function fetchForeCast(cityCode){
+    let res = await fetch(`https://dataservice.accuweather.com/forecasts/v1/daily/1day/${cityCode}?apikey=${thirdApiKey}`);
     let data = await res.json();
+    return data;
+  }
+
+  async function fetchAccuWeatherApi(cityName){
+    // Getting city code from the location api
+    let res = await fetch(`https://dataservice.accuweather.com/locations/v1/search?q=${cityName}&apikey=${thirdApiKey}`);
+    let data = await res.json();
+    let foreCast = await fetchForeCast(data[0].Key); 
+      
     if(res.ok){
       return {
-        cityName : data.location.name,
-        locationTime : data.location.localtime,
-        weather : data.current.weather_descriptions[0],
-        temperature : data.current.temperature,
-        humidity : data.current.humidity,
-        windSpeed : data.current.wind_speed,
-        windDeg : data.current.wind_degree,
-      };
+        weather : foreCast.Headline.Category,
+        description : foreCast.Headline.Text,
+        date : foreCast.DailyForecasts[0].Date,
+        temperature : foreCast.DailyForecasts[0].Temperature.Maximum.Value,
+        humidity : foreCast.DailyForecasts[0].Temperature.Minimum.Value,
+        daytime : foreCast.DailyForecasts[0].Day.IconPhrase, 
+        nighttime : foreCast.DailyForecasts[0].Night.IconPhrase
+      }
     }else{
       throw new Error("Could get teh OpenweatherApi", data.message);
     }
-    
   }
 }
